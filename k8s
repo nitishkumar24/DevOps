@@ -1,0 +1,308 @@
+   cmd 
+ kubectl  describe  service  'service-name'
+ kubectl logs "pod-name'
+ kubectl logs "pod-name' -f 
+ kubectl get svc 
+ kubectl get node -o wide 
+ ----
+   
+  kubectl create deployment  NAME --image=image-name
+  kubectl create  deployment nginx-depl  --image=nginx 
+  kubectl create deployment  NAME  image  option1  option2 
+  
+  kubect edit  deployment  name 
+  kubect edit  deployment   nginx-depl 
+  
+  kubectl logs [pod-name]
+  kubectl logs nginx-depl-85c9d7c5f4-9mf8m
+  kubectl logs -f sedgwick-wrapper-67649dbd99-vxl4g -n cidc 
+  kubectl describe  pod  [ pod-name]
+  kubectl get  deployment  nginx-depl  -o yaml > nginx-deployment-result.yaml  (   copy the   existing deployment file  with updated  one )
+  
+  kubectl exec -it [pod-name]  -n namespace -- bash
+  or 
+  kubectl exec -it  nginx-depl-85c9d7c5f4-9mf8m -- bash 
+  
+  kubectl get replicaset  - ( relicaset  is  managing  the  replicas  of  a pod - display all the  replica oth the pods )
+  
+  kubectl  get deployment  >  to get list  of all deployment 
+  kubectl  delete  deployment  [NAME]
+  kubectl  delete  deployment  nginx-depl 
+  
+   kubectl  delete  -f  nginx-depl.yaml 
+  
+  create in local a deployment file   with   configuration - nginx-deployment.yaml  
+  run - kubectl apply  -f  nginx-deployment.yaml  
+  
+  kubectl create namespace test-namespace
+  kubectl get namespace
+  
+  kubectl get configmap -o  yaml 
+  kubectl  apply -f  mysql-configmap.yaml  --namespace=my-namespace
+  
+  -  Change the active namespace with kubens - install kubectx
+   to  swith  the name space  
+   - kubens  name-namespace
+      kubens my-namespace 
+	  --
+	  service   Edpoints
+kubectl get endpoints 
+k8s  creates Endpoint object 
+- same name as service 
+- keep track of, which pods are the  member / endpoints of the service 
+	==============================
+	
+  -------
+  
+  minikube serviice mongo-express-service  >  assign to ip with nodeport  
+  ----------
+ each pod has it's own IP  adress 
+   > pods  are ephemeral -  means destroyed  frequently ! 
+  to over come on this  in k8s 
+   service:  as it has stable ip, load balancing, loose coupling, within & outside cluster 
+  svc > pod    
+  -----------------------
+ Four type of  kubernetes service 
+  1.  cluster IP service 
+  2. Headless  Service 
+  3. NodePort service 
+  4. Loadbalancer service 
+  ----
+  1. clusterIP  services >  this is default type service  if not specified  type,  
+  which  pods  to  forward  the  request  to  >  selector  ( pods are identified  via selector ) ,  
+  and which  poet to  forward request  to  >  targetport 
+   and in deplyment  file  > key value pair   which is labels of pods 
+   svc  matches  all 3 replica ,  register as a end points and must match all the selectors 
+   ---
+   	  service   Edpoints
+kubectl get endpoints 
+k8s  creates Endpoint object 
+- same name as service 
+- keep track of, which pods are the  member / endpoints of the service 
+   ---
+   2. Headless Services : - 
+   client  wants  to communicate with 1 spasific  pod  directly, means pods want to talk directly  with  specific pod
+   use case -  stateful application like  my-sql, mogodb 
+   solution > DNS Lookup 
+   DNS Lookup  for service  - return  single IP adress ( ClusterIP)
+   Set ClusterIP to  "None" - returns Pod  IP address instead 
+   
+   
+   >  service type attributes  - 3 types  > cluster IP, Node Port,  Loadbalancer
+   3. Node Port  Service  (  as we know clusterIP only accessible within  cluster  where as node port service External traffic has access to fixed port on each worker node 
+   node port  is not secure   over come  on this  is   loadbalancer  is the best option 
+   
+   4. Loadbalancer service  > become accessible externally through  cloud  providers Loadbalancer
+   Note -  Whenever  we create  the loadbalancer services Node Port and cluster IP  Service  are craeted  automatically by k8s 
+   Loadbalancer service is an extension of Nodeport  service   and Nodeport service is an extension  of ClusterIP Service 
+   Note  > NodePort service  Not for external connection 
+   always configure ingress or loadbalancer  for production  env 
+   
+   
+ -----------------
+ Feeature of k8s orch 
+ HIgh availabality / no down time 
+  scalability / hight performance 
+  DR - disater recover / backup and  restore 
+  --
+  components
+  pods
+  volume
+  service 
+  ingress
+  secrets
+  configmap 
+  statefulset
+  deployment 
+  --------------------------------
+  1 app > 1 node 
+  'service ( svc ) - attached to pod ( container )' -> service has permanent ip  
+  service has  2 functinalities >  permanent IP and Load balacer
+  
+  --------
+  db  can't be replicate via Deployment 
+  avoide data inconsistance 
+  db alwaya  done via statefulset   not   deployment
+  statefulset - databases 
+----
+Deployment for stateless app
+and  statefulset for stateful app like   or databases
+-----------------
+  worker machine > container runtime, kubelet, kube proxy 
+  kubelet - interact with both - container and node,  and kubelet start the pod  with a container inside 
+  kube proxy  forward the  request 
+  ----
+  Master  machine  ( 4 processes run on every master node ) >  Api  server, scheduler. controller manager, etcd
+  Api Server - it is like  clust  gatway an other hand can say  act  as a  gatekeeper for authanticatin, it  validate the  in  incoming  request  from the  client, good for  security pupose  as only 1 enrty point into the cluster.
+  (wheneve   we want to schedule the new pod, create  new service, deploy new application  or any other component   will have to talk to  API  server first  and  api servver will validate the request  if all good  it move to other process  )
+  scheduler -  api server  send the request  to start  application pod in one of the the worker node, schedule just  decide on which node new pod should be schedule 
+  controller manager-   detect cluster state chnages, if pod dies in any nodes  it send the request to schduler  and   schduler  recover ( replace the pods)  in 1 of the workernode  ( workernode scheduler base on  the resource  size),  schduler send request to kubelet to replace the node 
+  Kubelet - it  restarts the pod  in worker node 
+  etcd - etcd is the cluster brain, cluster  chnages  get  stored in the  key  value store, ( it keeps  all sensisitive data,  and it  contains details of  'is the cluster healthy' , 'what resource available' , 'did the cluster state chnage' )
+  Note- application data is not stored in etcd.
+  ----
+ Node - multiple master node  - API server is load balace  and  etcd  distributed storage across all master node
+ =================================
+ API  Server > three most powerfull client UI, API,  CLI 
+  kubectl - enable pods to run on kode ( create pod, destroy pod,  create  service )
+  kubectl  intract any type of cluster  ( minikube / cloud cluster )
+  ----
+  kubectl CLI -  for configuring the minikube cluster 
+  minikube  cli -  for start  up / deleting  the  cluster 
+  =================================
+Configuration File > eacth configuration file  has 3  major compponenet >  ( metatada,  specification, status ).   state > Desired ?   Actual ?  ( sate information will be in  etcd  as it is cluster data )
+metadata part contain labales: and   specification part  contain selector: in any yaml file 
+apiversion  
+kind 
+metatada
+specification
+
+ =============\
+ Nmaespace  -  in kubernetes  organise resources in namespace  in other hand  say  (vertual cluster inside a cluster )
+default        
+kube-node-lease  
+kube-public 
+kube-system
+--
+default  >  resources we create  are located here.
+kube-system > 1.do not create or modify in kube-system,  2.  system process,  3. master and kubectl process 
+kube-public  > public accessible  data ( a configmap, which contains cluster information )
+kube-node-lease > Heartbeat of node, each node has assocciated leasde object in name space, (  kube-node-lease determines the availabalityof a node) 
+ 
+  kubectl create namespace test-namespace
+  kubectl get namespace
+  
+ -When to use Namespace 
+ structure our component
+ Avoide conflicts b/w team 
+  Share services b/w different environment 
+  Access and resourec limit on namespace level
+  
+  Note : - we can't access most resorces  from another namespace
+               each namespace must define own configmap 
+			   
+  Note : - components, whcih can't be created within a name sapce - Volume  and Node  ( As live gobally in a cluster, we can not isolate them) 
+  
+  kubect api-resources --namespaced=false 
+  kubect api-resources --namespaced=true 
+    -  Change the active namespace with kubens - install kubectx
+   to  swith  the name space  
+   - kubens  name-namespace
+      kubens my-namespace 
+	  ============================
+	  
+	  Ingress 
+	  Ingress controller - 1. evaluates all the  rules , 2. manage redirections , 3. entry point to cluster ,  4. many third party implementation )
+	  in our case    Ingress controller   in  aws load balacer 
+	   Note - no server in k8s cluster is accessible from outside 
+	   
+	   minikube addons enable  ingress 
+	   kubectl get pods -A 
+	   -----
+	   minikube dashboard >  to create the  kubernetes-dashboard  name space  
+        kubectl get ns  > to check 
+create  a 	dashboard-ingress.yaml file   with all configuration 
+
+	   kubectl apply -f  dashboard-ingress.yaml 
+	   kubectl get ingress -n  kubernetes-dashboard 
+	   kubectl  get ingress  -n  kubernetes-dashboard  -- watch 
+	   
+	   in local  > sudo  vi  /etc/hosts 
+	   
+	   map the  ip  :  dashboard.com 
+	   
+	   check in browser  dashboard.com 
+	   ==============
+	   Helm 
+	   Package manager  for kubernetes  ( to package yaml files and distribute them in public and private repository )
+	   features
+	   1.public  registory   and   private registory : - share in the organisation 
+	   2. Templating Engine 
+	   3. release managemnet  (  helm install  < chartname> ,  helm upgrade  < chartname> , helm rollback  < chartname> )
+	   --------
+	   Helm  Chart Structure 
+Directory structure 
+
+my charts/
+  charts .yaml 
+  values,yaml 
+  charts/
+  templtest/
+  ...
+  
+  Top level mycharts folder >  name of charts 
+   charts.yaml > meta info about chart  ( name, version, dependency )
+   values.yaml  > value for the templete files  ( default  value we can override )
+   charts folder  > chart dependency 
+   templetes folder > the actual tremplte files 
+   
+   heml install < chartname> 
+   helm install  --values=my-values.yaml < chartname>
+	  
+	   ============================
+	   Volume 
+	   volume are NOT  namespace  whole cluster can access 
+	   How to persist data in kubernetes using volume
+	   
+	   persistance volume - pv  ( it is a  cluster  resources like  cpu  and ram to store the data, ) >  a cluster resources, created via yaml file - ( - kind: persistanceVolume   and -spec:  e.g  how much volume, Nfs parameter: ) PV  outside of the cluster of the  namespace  and accessible to the whole cluster 
+	   persistance volume claim - pvc > 
+	   storage  class  > ( in  config file - kind: StorageClass)  SC provisions persistance volume  dynamically  when  PVC  claim, storegBackend is defined in SC component 
+	    SC -  via provisioner  attribute,  - each storage backend has own provisioner, {-internal  provisioner - "kubernetes.io" } , - external provisioner
+		
+		SC usage > Requested  by  persistanceVomeClaim 
+	   
+	   pod requests the  volume through th PV claim  >  cliam  tries to find a volume in cluster  > volume has the actaul storage storage backend 
+	   Note -  claim must be in  same namespace 
+	   volume is mounted to the pod   and  volume  is mounted to  container 
+	   --------------
+	   configmap  and secrets  both are local  volume  > not created  via  PV   and PVC   and   managed bt k8s 
+	   ---------
+	   pod claim  storage  via PVC >   and PVC  Request storage  fro SC  >  SC  creates  PV  that  meets  the  needs of  the  cliam 
+	    
+	   =============
+	   statefulset ( statefulset for stateful application ) >  it's kubernetes component  and  different from deployemnet  
+	   stateful application example   all  Databases  > stateful application - don't keep record of state,  -  each request is completely new 
+	   statefulset application like  my-sql  -  can't be  created / deleted  at same time, can't be  randomly  addressed,  (replica pods are not identical - pod identity)
+	   example -  update data  based on previous  state, - quer data, - depends on most up-to-date  data / state 
+	   replacating  stateful application is more difficult 
+	   
+	   pod identity >  - sticky identity for each  pod,  (- created from same specification, but not interchnageable ), - persistant identifier across any  re-scheduling 
+	   -----------
+	  -   stateless application   deploy using  deployment   wheras stateful application  deploy using statefulset
+		
+	   note -  stateless application  ( - don't keep record of state,  doe- each request is completly  new )
+	    example  - node js > does't depends on previous data, passthrough  for data  query / update.  
+	   ---
+	   datapersistance > data  will servive  even  when all pods die 
+  ---------------------------------------------------------------------------------------------------------------------------------------------
+  Layers of  Abstraction >  Deployment,  Replicaset, Pod,  Container. 
+  
+  clusterrole           Create a cluster role
+  clusterrolebinding    Create a cluster role binding for a particular cluster role
+  configmap             Create a config map from a local file, directory or literal value
+  cronjob               Create a cron job with the specified name
+  deployment            Create a deployment with the specified name
+  ingress               Create an ingress with the specified name
+  job                   Create a job with the specified name
+  namespace             Create a namespace with the specified name
+  poddisruptionbudget   Create a pod disruption budget with the specified name
+  priorityclass         Create a priority class with the specified name
+  quota                 Create a quota with the specified name
+  role                  Create a role with single rule
+  rolebinding           Create a role binding for a particular role or cluster role
+  secret                Create a secret using specified subcommand
+  service               Create a service using a specified subcommand
+  serviceaccount        Create a service account with the specified name
+  token                 Request a service account 
+  --
+A Kubernetes object is a "record of intent"--once you create the object, the Kubernetes system will constantly work to ensure that the object exists. By creating an object, you're effectively telling the Kubernetes system what you want your cluster's workload to look like; this is your cluster's desired state.
+To work with Kubernetes objects—whether to create, modify, or delete them—you'll need to use the Kubernetes API. When you use the kubectl command-line interface, for example, the CLI makes the necessary Kubernetes API calls for you. You can also use the Kubernetes API directly in your own programs using one of the Client Libraries.
+---
+
+=================
+=======================
+
+Docker swarm  having limited feature    that's why  it's  simple installation 
+k8s  support multiple  container platfrom 
+--
+install minikube  
